@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "offline:package": "npm run build && node scripts/package-offline.mjs",
     "visual:capture": "npm run build && node scripts/capture-visuals.mjs",
-    "acceptance": "npm run check && node scripts/acceptance.mjs",
+    "acceptance": "npm run check && node scripts/acceptance.mjs && ACCEPTANCE_EDITION=v2 node scripts/acceptance.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "check": "npm run lint && npm run test && npm run build"

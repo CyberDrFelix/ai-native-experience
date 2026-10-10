@@ -13,6 +13,7 @@ await rm(archive, { force: true })
 await mkdir(packageDir, { recursive: true })
 await cp(path.join(root, 'dist'), path.join(packageDir, 'app'), { recursive: true })
 await cp(path.join(root, 'offline', 'START_AI_NATIVE.cmd'), path.join(packageDir, 'START_AI_NATIVE.cmd'))
+await cp(path.join(root, 'offline', 'START_BRATISLAVA_V2.cmd'), path.join(packageDir, 'START_BRATISLAVA_V2.cmd'))
 await cp(path.join(root, 'offline', 'serve.ps1'), path.join(packageDir, 'serve.ps1'))
 await cp(path.join(root, 'offline', 'README_OFFLINE.md'), path.join(packageDir, 'README_OFFLINE.md'))
 

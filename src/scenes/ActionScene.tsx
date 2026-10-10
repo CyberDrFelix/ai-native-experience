@@ -4,6 +4,7 @@ type Props = { beat: number; content: ActionSceneContent }
 
 export function ActionScene({ beat, content }: Props) {
   const id = content.beats[beat].id
+  if (content.activationQuestions) return <BratislavaAction id={id} content={content} />
   return <section className={`scene action-scene beat-${id}`} aria-labelledby="action-title">
     {id !== 'final-rest' && <div className="scene-index"><span>{content.number}</span><span>{content.title}</span></div>}
     {id === 'monday-question' && <ActionStatement lines={content.opening} />}
@@ -29,6 +30,19 @@ export function ActionScene({ beat, content }: Props) {
     {id === 'extraordinary' && <ActionStatement eyebrow="A HUMAN FUTURE" lines={[content.humanClose[0]]} />}
     {id === 'human-purpose' && <HumanClose content={content} />}
     {id === 'final-invitation' && <ActionStatement eyebrow="GIVE AI MEANINGFUL WORK" lines={['BECOME', 'AI-NATIVE.']} accent />}
+    {id === 'final-rest' && <FinalRest content={content} />}
+  </section>
+}
+
+function BratislavaAction({ id, content }: { id: string; content: ActionSceneContent }) {
+  const questionIndex = id === 'activation-one' ? 0 : id === 'activation-two' ? 1 : 2
+  return <section className={`scene action-scene bratislava-action beat-${id}`} aria-labelledby="action-title">
+    {id !== 'final-rest' && <div className="scene-index"><span>{content.number}</span><span>{content.title}</span></div>}
+    {id === 'monday-question' && <ActionStatement lines={content.opening} accent />}
+    {id.startsWith('activation-') && <div className="activation-question"><small>QUESTION 0{questionIndex + 1} · YOUR AI-NATIVE MONDAY</small><h2>{content.activationQuestions![questionIndex]}</h2><span>PAUSE · REFLECT · DISCUSS</span></div>}
+    {id === 'different-work' && <ActionStatement eyebrow="THE INVITATION" lines={content.closingMessage!} accent />}
+    {id === 'human-times' && <ActionStatement eyebrow="THE OPERATING MODEL" lines={[content.equation.first]} accent />}
+    {id === 'final-invitation' && <ActionStatement eyebrow="START WITH ONE MEANINGFUL RESPONSIBILITY" lines={content.closingMessage!} accent />}
     {id === 'final-rest' && <FinalRest content={content} />}
   </section>
 }

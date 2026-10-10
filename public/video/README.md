@@ -4,6 +4,13 @@ The approved production greeting is located at:
 
 `public/video/digital-felix-india-greeting.mp4`
 
+The approved Bratislava V2 opening is located at:
+
+`public/video/AI_Native_Bratislava_Digital_Felix_Opening.mp4`
+
+Bratislava production format: MP4, H.264 Main, 1920×1080 at 25 fps,
+AAC-LC stereo 48 kHz, 53.823 seconds, 93,166,744 bytes.
+
 Production format:
 - MP4 / H.264 High Profile, Level 4.1
 - 1920×1080

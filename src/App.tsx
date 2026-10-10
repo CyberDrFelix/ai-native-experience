@@ -11,12 +11,14 @@ import { LeadershipScene } from './scenes/LeadershipScene'
 import { ActionScene } from './scenes/ActionScene'
 
 export function App() {
-  const edition = editions['india-cfo']
+  const edition = location.pathname.split('/').includes('v2') ? editions['bratislava-v2'] : editions['india-cfo']
   const [position, setPosition] = useState<Position>({ scene: 0, beat: 0 })
   const [hudVisible, setHudVisible] = useState(true)
   const [presenting, setPresenting] = useState(new URLSearchParams(location.search).has('present'))
   const [constitutionChoice, setConstitutionChoice] = useState<string | null>(null)
   const [workChoice, setWorkChoice] = useState<string | null>(null)
+  const [intuitionChoice, setIntuitionChoice] = useState<string | null>(null)
+  const [governanceChoice, setGovernanceChoice] = useState<string | null>(null)
   const beatCounts = edition.scenes.map(scene => scene.beats.length)
   const scene = edition.scenes[position.scene]
   const currentBeat = scene.beats[position.beat]
@@ -42,7 +44,7 @@ export function App() {
       if (event.key === 'ArrowRight' || event.key === ' ') navigate(1)
       if (event.key === 'ArrowLeft') navigate(-1)
       if (event.key.toLowerCase() === 'f') void toggleFullscreen()
-      if (event.key.toLowerCase() === 'r') { setPosition(current => ({ ...current, beat: 0 })); setConstitutionChoice(null); setWorkChoice(null) }
+      if (event.key.toLowerCase() === 'r') { setPosition(current => ({ ...current, beat: 0 })); setConstitutionChoice(null); setWorkChoice(null); setIntuitionChoice(null); setGovernanceChoice(null) }
       if (event.key.toLowerCase() === 'h') setHudVisible(value => !value)
       if (event.key.toLowerCase() === 'p') togglePresentation()
     }
@@ -59,7 +61,7 @@ export function App() {
         {scene.id === 'gap' && <GapScene beat={position.beat} content={scene} />}
         {scene.id === 'employee' && <EmployeeScene beat={position.beat} content={scene} />}
         {scene.id === 'onboarding' && <OnboardingScene beat={position.beat} content={scene} selectedChoice={constitutionChoice} onSelectChoice={setConstitutionChoice} />}
-        {scene.id === 'work' && <WorkScene beat={position.beat} content={scene} selectedChoice={workChoice} onSelectChoice={setWorkChoice} />}
+        {scene.id === 'work' && <WorkScene beat={position.beat} content={scene} selectedChoice={workChoice} onSelectChoice={setWorkChoice} intuitionChoice={intuitionChoice} onSelectIntuition={setIntuitionChoice} governanceChoice={governanceChoice} onSelectGovernance={setGovernanceChoice} />}
         {scene.id === 'leadership' && <LeadershipScene beat={position.beat} content={scene} />}
         {scene.id === 'action' && <ActionScene beat={position.beat} content={scene} />}
       </div>

@@ -13,6 +13,8 @@ npm run dev
 
 Open the URL printed by Vite (normally `http://localhost:5173`). For presenter mode, press `P` or open `http://localhost:5173/?present=1`.
 
+The preserved India edition is served at `/`. The Bratislava V2 edition is served independently at `/v2/` (or `/v2/?present=1` for direct presenter mode). Each edition uses its own local Digital Felix asset under `public/video/`; both remain available offline and require explicit presenter playback.
+
 ## Production and static preview
 
 ```bash

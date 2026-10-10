@@ -1,3 +1,5 @@
+import { fifteenMinuteCompany, type Company15Config } from '../lib/company15'
+
 export type BeatContent = { id: string; cue: string; notes?: string; seconds: number }
 type SceneBase = { id: string; number: string; title: string; hudTitle: string; beats: BeatContent[] }
 export type BootSceneContent = SceneBase & { id: 'boot'; eyebrow: string; eventLabel: string; headline: [string, string]; answer: string; greeting: string; greetingCaption: string; liveLabel: string; video: { src: string; label: string; state: string; fallbackTitle: string; fallbackStatus: string } }
@@ -18,6 +20,16 @@ export type SimulationEvidence = { source: string; finding: string }
 export type SimulationHypothesis = { id: string; label: string; result: string; evidence: string[] }
 export type WorkSceneContent = SceneBase & {
   id: 'work'; entity: string; company: string; scenario: string
+  mode?: 'cfo' | 'ceo' | 'company15'
+  company15?: Company15Config
+  ceo?: {
+    opening: string[]; tensions: string[]; hypotheses: DecisionChoice[]
+    assessments: { label: string; hypothesis: string; confidence: string; qualifier: string }[]
+    evidenceTrail: SimulationEvidence[]
+    evidenceModel: { observed: string[]; inferred: string[]; uncertain: string[] }
+    exposure: string; recommendation: string
+    twist: { commitment: string; missed: string; resolution: string[] }
+  }
   trigger: { label: string; baseline: string; current: string; change: string; gap: string }
   progress: string[]; evidence: SimulationEvidence[]; missingEvidence: string[]
   specialist: { id: string; name: string; request: string; findings: string[]; conclusion: string }
@@ -41,6 +53,7 @@ export type LeadershipSceneContent = SceneBase & {
 }
 export type ActionSceneContent = SceneBase & {
   id: 'action'; opening: string[]; processExamples: string[]; nativeQuestion: string[]
+  activationQuestions?: string[]; closingMessage?: string[]
   legacyFlow: string[]; outcome: { question: string[]; not: string; but: string[] }
   redistribution: { ai: string[]; human: string[] }
   employee: { label: string; status: string; foundations: string[]; modules: string[] }
@@ -349,4 +362,85 @@ export const indiaCfo = validateEdition({
   ],
 } satisfies Edition)
 
-export const editions = { 'india-cfo': indiaCfo }
+const indiaScene = <T extends SceneContent['id']>(id: T) => indiaCfo.scenes.find(scene => scene.id === id) as Extract<SceneContent, { id: T }>
+
+export const bratislavaV2 = validateEdition({
+  id: 'bratislava-v2', durationMinutes: 50, presenter: 'Felix Burcea',
+  scenes: [
+    {
+      ...indiaScene('boot'), eventLabel: 'Executive Experience · Bratislava',
+      greeting: 'Dobrý deň. Welcome.', greetingCaption: 'SLOVAK WELCOME · ENGLISH CONTINUATION · DIGITAL FELIX',
+      video: { src: '../video/AI_Native_Bratislava_Digital_Felix_Opening.mp4', label: 'DIGITAL FELIX', state: 'BRATISLAVA VIDEO · LOCAL', fallbackTitle: 'Digital Felix greeting unavailable', fallbackStatus: 'CONTINUE LIVE WITH FELIX' },
+      beats: [
+        { id: 'signal', cue: 'Open on the signal.', notes: 'Let the room settle.', seconds: 15 },
+        { id: 'identity', cue: 'Your next employee might be AI.', notes: 'Pause after AI.', seconds: 25 },
+        { id: 'greeting', cue: 'Play the Bratislava Digital Felix opening.', notes: 'Select Play Digital Felix. Let the Slovak → English opening play without narration.', seconds: 65 },
+        { id: 'handover', cue: 'Take the room live.', notes: 'Digital Felix reveals the twin, introduces AI-native work, then hands to the real Felix.', seconds: 25 },
+      ],
+    },
+    {
+      ...indiaScene('gap'), question: 'Where are you with AI?',
+      maturity: [{ number: '01', label: 'Individual experiments' }, { number: '02', label: 'AI assists daily work' }, { number: '03', label: 'AI owns workflow steps' }, { number: '04', label: 'Work is redesigned around AI' }],
+      gap: ['USING AI TOOLS', 'BECOMING AI-NATIVE'], northStar: ['If AI existed on Day 1,', 'would we design how work gets done', 'the same way?'],
+    },
+    { ...indiaScene('employee'), finalQuestion: ['If this is an AI-native employee,', 'what does it need before it can work?'] },
+    { ...indiaScene('onboarding'), signal: { ...indiaScene('onboarding').signal, final: 'MARKET OPPORTUNITY DETECTED' } },
+    {
+      ...indiaScene('work'), mode: 'company15', company15: fifteenMinuteCompany, title: 'THE 15-MINUTE COMPANY', hudTitle: '15-MINUTE COMPANY', scenario: 'NOVA · NEW BUSINESS MISSION',
+      beats: [
+        ['mission','Open the 15-minute company.','Five AI employees. One human leader. Thirty days to market.',35],
+        ['opportunity','Make the opportunity immediately relatable.','NOVA ONE helps small businesses answer, schedule and follow up.',40],
+        ['board-role','Make the audience the Board.','Their decisions shape the simulated strategy.',30],
+        ['market-decision','Ask who NOVA should serve first.','Reveal all three choices, then vote.',100],
+        ['market-result','Show the selected strategic implications.','The choice changes economics, product and route to market.',45],
+        ['mission-accepted','Employee 001 accepts the mission.','Activate the AI-native organization.',30],
+        ['organization-activate','Bring five employees online.','Give every employee a stable identity, task and deliverable.',45],
+        ['orchestration','Decompose and distribute the work.','The center of the experience is coordinated work, not five parallel cards.',45],
+        ['collaboration','Show dependencies changing the work.','Market insight changes product; product changes economics and risk.',55],
+        ['market-brief','Deliver the market opportunity brief.','Clearly mark every number as a fictional scenario input.',45],
+        ['financial-model','Reveal the compact financial model.','Pricing, CAC, margin and scenarios follow the selected segment.',55],
+        ['financial-scenarios','Compare conservative, base and ambitious scenarios.','Keep formulas correct and the chart legible.',50],
+        ['product-shell','Reveal NOVA ONE as a real product.','This is the first product wow moment.',45],
+        ['product-activity','Bring the product prototype to life.','Show inquiry, availability, draft response and human approval.',55],
+        ['campaign','Deliver the segment-specific launch campaign.','Make the positioning tangible, not generic.',45],
+        ['roadmap','Build the controlled 30-day roadmap.','A plan and prototype are not a production-ready system.',55],
+        ['consolidate','Return completed deliverables to Employee 001.','Make collaboration converge visibly.',45],
+        ['executive-brief','Present the board recommendation.','Assessments are fictional simulation judgments.',55],
+        ['launch-decision','Ask the Board to approve, pivot or stop.','Retain the selection for the governance reveal.',100],
+        ['launch-result','Show the consequence of the Board decision.','Every choice has a credible strategic cost.',45],
+        ['governance-alert','Detect the secondary-data-use dependency.','Employee 045 interrupts the recommendation.',45],
+        ['privacy-detail','Explain the issue precisely.','The proposed secondary use lacks an established lawful basis, notices or permissions.',55],
+        ['authority','Land the authority lesson.','High confidence is not authority.',40],
+        ['governance-decision','Ask the Board what to do.','Cancel, ignore, or redesign with governance built in.',100],
+        ['governance-result','Show the selected consequence.','Do not turn the choice into a simplistic quiz.',50],
+        ['redesign','Coordinate the privacy-by-design response.','Product, risk, finance and growth update the business together.',55],
+        ['revised-plan','Show the revised executive recommendation.','Higher cost, narrower scope, reduced exposure, review still required.',55],
+        ['human-direction','Return direction and authorization to people.','AI generated options. Humans chose direction.',40],
+        ['human-times','Resolve with Human × AI.','Together, they redesigned the business.',40],
+      ].map(([id, cue, notes, seconds]) => ({ id: id as string, cue: cue as string, notes: notes as string, seconds: seconds as number })),
+    },
+    {
+      ...indiaScene('leadership'),
+      redistribution: { ...indiaScene('leadership').redistribution, ai: ['RESEARCH', 'MONITORING', 'CUSTOMER SIGNALS', 'ANALYSIS', 'SCENARIO GENERATION', 'COORDINATION', 'EXECUTION WITHIN BOUNDARIES'] },
+      workforce: { ...indiaScene('leadership').workforce, specialist: 'EMPLOYEES 014 · 021 · 032 · 045' },
+    },
+    {
+      ...indiaScene('action'), title: 'YOUR AI-NATIVE MONDAY', hudTitle: 'YOUR MONDAY', opening: ['YOUR', 'AI-NATIVE MONDAY'],
+      activationQuestions: ['WHAT REPETITIVE PROCESS WOULD YOU REDESIGN WITH AI?', 'WHAT RESPONSIBILITY WOULD YOU GIVE ONE AI EMPLOYEE TOMORROW?', 'WHICH DECISION WOULD YOU IMPROVE WITH AI INTELLIGENCE — WHILE KEEPING HUMAN ACCOUNTABILITY?'],
+      closingMessage: ["DON'T JUST USE AI.", 'BUILD A DIFFERENT WAY OF WORKING.'],
+      final: { ...indiaScene('action').final, philosophy: ['THE EXPERIENCE', 'HUMAN × AI'] },
+      beats: [
+        { id: 'monday-question', cue: 'Introduce Your AI-Native Monday.', notes: 'Move from leadership to personal action.', seconds: 25 },
+        { id: 'activation-one', cue: 'Ask which repetitive process to redesign.', notes: 'Pause for reflection.', seconds: 55 },
+        { id: 'activation-two', cue: 'Ask what responsibility an AI employee should own.', notes: 'Responsibility is more meaningful than a tool use case.', seconds: 55 },
+        { id: 'activation-three', cue: 'Ask which decision should improve.', notes: 'Keep human accountability explicit.', seconds: 60 },
+        { id: 'different-work', cue: 'Close the practical activation.', notes: 'Do not just use AI. Build a different way of working.', seconds: 45 },
+        { id: 'human-times', cue: 'Resolve with Human × AI.', notes: 'The multiplication is the operating model.', seconds: 30 },
+        { id: 'final-invitation', cue: 'Invite the room to begin.', notes: 'Close live, then advance once more.', seconds: 35 },
+        { id: 'final-rest', cue: 'Hold the final resting screen.', notes: 'Leave visible for applause or Q&A.', seconds: 90 },
+      ],
+    },
+  ],
+} satisfies Edition)
+
+export const editions = { 'india-cfo': indiaCfo, 'bratislava-v2': bratislavaV2 }

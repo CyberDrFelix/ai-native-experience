@@ -1,7 +1,10 @@
 import { spawn } from 'node:child_process'
 import { chromium } from '@playwright/test'
 
-const url = 'http://127.0.0.1:4199/?present=1'
+const isV2 = process.env.ACCEPTANCE_EDITION === 'v2'
+const url = `http://127.0.0.1:4199/${isV2 ? 'v2/' : ''}?present=1`
+const expectedFrames = isV2 ? 116 : 140
+const finalSceneBeats = isV2 ? 8 : 24
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH || '/snap/bin/chromium'
 const viewports = [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]
 
@@ -50,7 +53,7 @@ try {
       const next = await page.locator('.stage').getAttribute('data-beat')
       if (next === previous) break
     }
-    if (frames !== 140) throw new Error(`Expected 140 beats, audited ${frames} at ${viewport.width}×${viewport.height}`)
+    if (frames !== expectedFrames) throw new Error(`Expected ${expectedFrames} beats, audited ${frames} at ${viewport.width}×${viewport.height}`)
     await page.keyboard.press('h')
     if (await page.locator('.hud').count()) throw new Error('HUD did not hide')
     await page.keyboard.press('h')
@@ -60,12 +63,28 @@ try {
     await page.keyboard.press('p')
     await page.keyboard.press('r')
     if (await page.locator('.stage').getAttribute('data-beat') !== 'monday-question') throw new Error('Scene reset did not return to the Scene 07 opening')
-    for (let index = 0; index < 23; index += 1) await page.keyboard.press('ArrowRight')
-    for (let index = 0; index < 139; index += 1) await page.keyboard.press('ArrowLeft')
+    for (let index = 0; index < finalSceneBeats - 1; index += 1) await page.keyboard.press('ArrowRight')
+    for (let index = 0; index < expectedFrames - 1; index += 1) await page.keyboard.press('ArrowLeft')
     if (await page.locator('.stage').getAttribute('data-beat') !== 'signal') throw new Error('Backward traversal did not return to the opening beat')
     if (errors.length) throw new Error(`Browser console errors: ${errors.join('; ')}`)
     if (externalRequests.length) throw new Error(`External requests detected: ${externalRequests.join('; ')}`)
     await page.close()
+  }
+  if (isV2) {
+    const decisionPage = await browser.newPage({ viewport: viewports[0], reducedMotion: 'reduce' })
+    await decisionPage.goto(url)
+    for (let index = 0; index < 100 && await decisionPage.locator('.stage').getAttribute('data-beat') !== 'market-decision'; index += 1) await decisionPage.keyboard.press('ArrowRight')
+    if (await decisionPage.locator('.stage').getAttribute('data-beat') !== 'market-decision') throw new Error('V2 market decision beat is not reachable')
+    await decisionPage.keyboard.press('c')
+    if (await decisionPage.getByRole('button', { name: /ENTERPRISE DISTRIBUTION PARTNERS/ }).getAttribute('aria-pressed') !== 'true') throw new Error('V2 market selection was not stored')
+    await decisionPage.keyboard.press('ArrowRight')
+    if (!await decisionPage.getByText('LARGE DISTRIBUTION').count()) throw new Error('V2 market selection did not change downstream strategy')
+    await decisionPage.keyboard.press('ArrowLeft')
+    if (await decisionPage.getByRole('button', { name: /ENTERPRISE DISTRIBUTION PARTNERS/ }).getAttribute('aria-pressed') !== 'true') throw new Error('V2 market selection did not survive backward navigation')
+    await decisionPage.keyboard.press('r')
+    for (let index = 0; index < 3; index += 1) await decisionPage.keyboard.press('ArrowRight')
+    if (await decisionPage.locator('[aria-pressed="true"]').count()) throw new Error('V2 scene reset did not clear board decisions')
+    await decisionPage.close()
   }
   const mediaPage = await browser.newPage({ viewport: viewports[0], reducedMotion: 'reduce' })
   await mediaPage.goto(url)
@@ -78,26 +97,16 @@ try {
   const dimensions = await media.evaluate(video => ({ width: video.videoWidth, height: video.videoHeight, readyState: video.readyState }))
   if (dimensions.width !== 1920 || dimensions.height !== 1080 || dimensions.readyState < 1) throw new Error(`Digital Felix metadata invalid: ${JSON.stringify(dimensions)}`)
   const playButton = mediaPage.getByRole('button', { name: /PLAY DIGITAL FELIX/ })
-  if (await playButton.count()) {
-    await playButton.click()
-    await mediaPage.waitForTimeout(500)
-    const playback = await media.evaluate(video => ({ paused: video.paused, currentTime: video.currentTime, controls: video.controls }))
-    if (playback.paused || playback.currentTime <= 0 || playback.controls) throw new Error(`Digital Felix playback failed: ${JSON.stringify(playback)}`)
-    await mediaPage.keyboard.press('ArrowRight')
-    if (!await media.evaluate(video => video.paused)) throw new Error('Digital Felix did not pause on live handoff')
-  } else {
-    const passivePlayback = await media.evaluate(video => ({ paused: video.paused, currentTime: video.currentTime, ended: video.ended, error: video.error?.message ?? null }))
-    if (!passivePlayback.paused || passivePlayback.currentTime > 0) {
-      await mediaPage.keyboard.press('ArrowRight')
-      if (!await media.evaluate(video => video.paused)) throw new Error('Digital Felix did not pause on live handoff')
-    } else {
-      await mediaPage.waitForTimeout(100)
-      if (!await mediaPage.getByText('Digital Felix greeting unavailable').count()) throw new Error(`Digital Felix exposed neither playback nor fallback: ${JSON.stringify(passivePlayback)}`)
-    }
-  }
+  if (!await playButton.count()) throw new Error('Digital Felix play control is unavailable')
+  await playButton.click()
+  await mediaPage.waitForTimeout(500)
+  const playback = await media.evaluate(video => ({ paused: video.paused, currentTime: video.currentTime, controls: video.controls, muted: video.muted, volume: video.volume }))
+  if (playback.paused || playback.currentTime <= 0 || playback.controls || playback.muted || playback.volume <= 0) throw new Error(`Digital Felix playback failed: ${JSON.stringify(playback)}`)
+  await mediaPage.keyboard.press('ArrowRight')
+  if (!await media.evaluate(video => video.paused)) throw new Error('Digital Felix did not pause on live handoff')
   await mediaPage.close()
   await browser.close()
-  console.log('Acceptance passed: 280 frames, navigation/reset/HUD/presentation, safe stage, offline resources, console, and Digital Felix media/fallback path.')
+  console.log(`Acceptance passed for ${isV2 ? 'Bratislava V2' : 'India'}: ${expectedFrames * 2} frames, navigation/reset/HUD/presentation, safe stage, offline resources, console, and Digital Felix media/fallback path.`)
 } finally {
   if (server.pid) { try { process.kill(-server.pid, 'SIGTERM') } catch (error) { if (error.code !== 'ESRCH') throw error } }
 }

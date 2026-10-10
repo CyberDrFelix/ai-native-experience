@@ -9,8 +9,8 @@
 ## Start the experience
 
 1. Open the extracted folder.
-2. Double-click `START_AI_NATIVE.cmd`.
-3. Keep the command window open. The default browser should open automatically at `http://127.0.0.1:8765/?present=1`.
+2. Double-click `START_AI_NATIVE.cmd` for the India edition, or `START_BRATISLAVA_V2.cmd` for the Bratislava edition.
+3. Keep the command window open. The default browser opens automatically at `http://127.0.0.1:8765/?present=1` for India or `http://127.0.0.1:8765/v2/?present=1` for Bratislava.
 4. Click once on the Digital Felix play control when Scene 01 reaches the welcome video.
 
 No internet connection, Node.js installation, administrator access, or external service is required. Windows PowerShell, included with supported Windows installations, serves the files only to this laptop through `127.0.0.1`.
@@ -29,7 +29,7 @@ Return to the command window and press `Ctrl+C`, then close the window.
 
 1. Leave the command window running.
 2. Open Microsoft Edge or Chrome manually.
-3. Enter `http://127.0.0.1:8765/?present=1` in the address bar.
+3. Enter `http://127.0.0.1:8765/?present=1` for India or `http://127.0.0.1:8765/v2/?present=1` for Bratislava.
 
 If port 8765 is already in use, open PowerShell in the extracted folder and run:
 

@@ -1,4 +1,4 @@
-param([int]$Port = 8765)
+param([int]$Port = 8765, [string]$StartPath = '/?present=1')
 
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'app'))
@@ -18,7 +18,7 @@ $mime = @{
 
 try {
   $listener.Start()
-  $url = "http://127.0.0.1:$Port/?present=1"
+  $url = "http://127.0.0.1:$Port$StartPath"
   Write-Host "AI Native is available at $url"
   Write-Host 'Keep this window open. Press Ctrl+C here to stop.'
   Start-Process $url
@@ -39,6 +39,7 @@ try {
       if ([string]::IsNullOrWhiteSpace($requestPath)) { $requestPath = 'index.html' }
 
       $file = [IO.Path]::GetFullPath((Join-Path $root $requestPath.Replace('/', [IO.Path]::DirectorySeparatorChar)))
+      if (Test-Path $file -PathType Container) { $file = Join-Path $file 'index.html' }
       if (-not $file.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path $file -PathType Leaf)) {
         $status = '404 Not Found'
         $body = [Text.Encoding]::UTF8.GetBytes('Not found')
