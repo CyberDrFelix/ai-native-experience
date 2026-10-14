@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { PresenterHud } from './components/PresenterHud'
 import { editions } from './content/editions'
 import { move, type Position } from './lib/navigation'
+import { isInteractiveTarget, navigationDirectionForKey } from './lib/presenterKeys'
 import { BootScene } from './scenes/BootScene'
 import { GapScene } from './scenes/GapScene'
 import { EmployeeScene } from './scenes/EmployeeScene'
@@ -12,6 +13,7 @@ import { ActionScene } from './scenes/ActionScene'
 
 export function App() {
   const edition = location.pathname.split('/').includes('v2') ? editions['bratislava-v2'] : editions['india-cfo']
+  const isBratislavaV2 = edition.id === 'bratislava-v2'
   const [position, setPosition] = useState<Position>({ scene: 0, beat: 0 })
   const [hudVisible, setHudVisible] = useState(true)
   const [presenting, setPresenting] = useState(new URLSearchParams(location.search).has('present'))
@@ -40,9 +42,15 @@ export function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (['ArrowRight', ' ', 'ArrowLeft', 'f', 'F', 'r', 'R', 'h', 'H', 'p', 'P'].includes(event.key)) event.preventDefault()
-      if (event.key === 'ArrowRight' || event.key === ' ') navigate(1)
-      if (event.key === 'ArrowLeft') navigate(-1)
+      const direction = navigationDirectionForKey(event.key, isBratislavaV2)
+      if (direction !== null) {
+        if (isBratislavaV2 && isInteractiveTarget(event.target)) return
+        event.preventDefault()
+        navigate(direction)
+        return
+      }
+
+      if (['f', 'F', 'r', 'R', 'h', 'H', 'p', 'P'].includes(event.key)) event.preventDefault()
       if (event.key.toLowerCase() === 'f') void toggleFullscreen()
       if (event.key.toLowerCase() === 'r') { setPosition(current => ({ ...current, beat: 0 })); setConstitutionChoice(null); setWorkChoice(null); setIntuitionChoice(null); setGovernanceChoice(null) }
       if (event.key.toLowerCase() === 'h') setHudVisible(value => !value)
@@ -50,7 +58,7 @@ export function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate, toggleFullscreen, togglePresentation])
+  }, [isBratislavaV2, navigate, toggleFullscreen, togglePresentation])
 
   return (
     <main className={`experience ${presenting ? 'presenting' : ''}`} data-scene={scene.id}>
